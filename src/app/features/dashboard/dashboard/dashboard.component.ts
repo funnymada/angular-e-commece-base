@@ -396,21 +396,37 @@ export class DashboardComponent implements OnInit {
   loadRecentOrders(): void {
     this.orderService.getOrders({ limit: 5, sortBy: "createdAt", sortOrder: "desc" }).subscribe({
       next: (data) => {
-        this.recentOrders = data.orders
+        if (Array.isArray(data)) {
+          this.recentOrders = data.slice(0, 5)
+        } else if (data && typeof data === "object") {
+          this.recentOrders = data.orders || []
+        } else {
+          this.recentOrders = []
+        }
       },
       error: (error) => {
         console.error("Error loading recent orders:", error)
+        this.recentOrders = []
       },
     })
   }
 
   loadProductCount(): void {
-    this.productService.getProducts({ limit: 1 }).subscribe({
+    this.productService.getProducts().subscribe({
       next: (data) => {
-        this.totalProducts = data.total
+        console.log("Dashboard received products data:", data)
+
+        if (Array.isArray(data)) {
+          this.totalProducts = data.length
+        } else if (data && typeof data === "object") {
+          this.totalProducts = data.total || (data.products ? data.products.length : 0)
+        } else {
+          this.totalProducts = 0
+        }
       },
       error: (error) => {
         console.error("Error loading product count:", error)
+        this.totalProducts = 0
       },
     })
   }
@@ -427,4 +443,3 @@ export class DashboardComponent implements OnInit {
     }
   }
 }
-

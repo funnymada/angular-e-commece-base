@@ -1,5 +1,5 @@
 export interface Product {
-  id: number
+  id: string // Changed from number to string for MongoDB ObjectId
   name: string
   description: string
   price: number
@@ -31,4 +31,3 @@ export interface ProductUpdate {
   stock?: number
   imageUrl?: string
 }
-

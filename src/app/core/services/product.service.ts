@@ -13,6 +13,7 @@ export class ProductService {
 
   constructor(private http: HttpClient) {}
 
+  // Modifica il metodo getProducts per gestire correttamente sia array che oggetti paginati
   getProducts(params?: {
     categoryId?: number
     search?: string
@@ -20,7 +21,7 @@ export class ProductService {
     sortOrder?: "asc" | "desc"
     page?: number
     limit?: number
-  }): Observable<{ products: Product[]; total: number }> {
+  }): Observable<Product[] | { products: Product[]; total: number }> {
     let httpParams = new HttpParams()
 
     if (params) {
@@ -36,14 +37,16 @@ export class ProductService {
     console.log("Request params:", params)
     console.log("HTTP params:", httpParams.toString())
 
-    return this.http.get<{ products: Product[]; total: number }>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<Product[] | { products: Product[]; total: number }>(this.apiUrl, { params: httpParams }).pipe(
       tap((response) => {
+        console.log("=== PRODUCT SERVICE DEBUG ===")
         console.log("Raw API response:", response)
-        console.log("Products in response:", response?.products)
-        console.log("Total in response:", response?.total)
-        console.log("Type of response:", typeof response)
-        console.log("Is response an array?", Array.isArray(response))
-        console.log("Is products an array?", Array.isArray(response?.products))
+        console.log("Response type:", typeof response)
+        console.log("Is array?", Array.isArray(response))
+        console.log("Response keys:", Object.keys(response || {}))
+        console.log("Products count:", Array.isArray(response) ? response.length : response?.products?.length)
+        console.log("Total from response:", Array.isArray(response) ? undefined : response?.total)
+        console.log("==============================")
       }),
     )
   }

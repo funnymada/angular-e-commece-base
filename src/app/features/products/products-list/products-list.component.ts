@@ -600,8 +600,10 @@ export class ProductListComponent implements OnInit {
 
         if (Array.isArray(data)) {
           this.allProducts = data as Product[]
-        } else if (data && typeof data === "object" && Array.isArray(data.products)) {
-          this.allProducts = data.products
+        } else if (data && typeof data === "object") {
+          // Gestisci sia il formato { products: Product[], total: number }
+          // che il formato Product[]
+          this.allProducts = data.products || []
         } else {
           this.allProducts = []
         }
