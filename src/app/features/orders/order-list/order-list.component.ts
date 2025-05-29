@@ -574,56 +574,106 @@ export class OrderListComponent implements OnInit {
     this.updatePaginatedOrders()
   }
 
-  // Funzione per caricare ordini di test con ObjectIds validi
+  // Funzione per caricare ordini di test con ObjectIds validi e dati più realistici
   loadMockOrders(): void {
     const mockOrders: Order[] = [
       {
-        id: "507f1f77bcf86cd799439011", // Valid ObjectId
-        orderNumber: "ORD-001",
-        user: { id: "507f1f77bcf86cd799439012", username: "user1", email: "user1@example.com" },
-        totalAmount: 125.99,
+        id: "507f1f77bcf86cd799439011",
+        orderNumber: "ORD-2024-001",
+        user: { id: "507f1f77bcf86cd799439012", username: "mario.rossi", email: "mario.rossi@example.com" },
+        totalAmount: 299.99,
         status: "pending",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
         updatedAt: new Date().toISOString(),
         items: [],
       },
       {
-        id: "507f1f77bcf86cd799439013", // Valid ObjectId
-        orderNumber: "ORD-002",
-        user: { id: "507f1f77bcf86cd799439014", username: "user2", email: "user2@example.com" },
-        totalAmount: 89.5,
-        status: "completed", // Changed from "shipped"
-        createdAt: new Date().toISOString(),
+        id: "507f1f77bcf86cd799439013",
+        orderNumber: "ORD-2024-002",
+        user: { id: "507f1f77bcf86cd799439014", username: "giulia.bianchi", email: "giulia.bianchi@example.com" },
+        totalAmount: 156.75,
+        status: "completed",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
         updatedAt: new Date().toISOString(),
         items: [],
       },
       {
-        id: "507f1f77bcf86cd799439015", // Valid ObjectId
-        orderNumber: "ORD-003",
-        user: { id: "507f1f77bcf86cd799439016", username: "user3", email: "user3@example.com" },
-        totalAmount: 210.75,
-        status: "completed", // Changed from "delivered"
-        createdAt: new Date().toISOString(),
+        id: "507f1f77bcf86cd799439015",
+        orderNumber: "ORD-2024-003",
+        user: { id: "507f1f77bcf86cd799439016", username: "luca.verdi", email: "luca.verdi@example.com" },
+        totalAmount: 445.2,
+        status: "completed",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
         updatedAt: new Date().toISOString(),
         items: [],
       },
       {
-        id: "507f1f77bcf86cd799439017", // Valid ObjectId
-        orderNumber: "ORD-004",
-        user: { id: "507f1f77bcf86cd799439018", username: "user4", email: "user4@example.com" },
-        totalAmount: 45.25,
-        status: "cancelled", // Changed from "canceled"
-        createdAt: new Date().toISOString(),
+        id: "507f1f77bcf86cd799439017",
+        orderNumber: "ORD-2024-004",
+        user: { id: "507f1f77bcf86cd799439018", username: "anna.neri", email: "anna.neri@example.com" },
+        totalAmount: 89.99,
+        status: "cancelled",
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
         updatedAt: new Date().toISOString(),
         items: [],
       },
       {
-        id: "507f1f77bcf86cd799439019", // Valid ObjectId
-        orderNumber: "ORD-005",
-        user: { id: "507f1f77bcf86cd799439012", username: "user1", email: "user1@example.com" },
-        totalAmount: 320.0,
+        id: "507f1f77bcf86cd799439019",
+        orderNumber: "ORD-2024-005",
+        user: { id: "507f1f77bcf86cd799439020", username: "francesco.blu", email: "francesco.blu@example.com" },
+        totalAmount: 678.5,
         status: "pending",
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+        updatedAt: new Date().toISOString(),
+        items: [],
+      },
+      {
+        id: "507f1f77bcf86cd799439021",
+        orderNumber: "ORD-2024-006",
+        user: { id: "507f1f77bcf86cd799439022", username: "sara.gialli", email: "sara.gialli@example.com" },
+        totalAmount: 234.8,
+        status: "completed",
+        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days ago
+        updatedAt: new Date().toISOString(),
+        items: [],
+      },
+      {
+        id: "507f1f77bcf86cd799439023",
+        orderNumber: "ORD-2024-007",
+        user: { id: "507f1f77bcf86cd799439024", username: "marco.viola", email: "marco.viola@example.com" },
+        totalAmount: 567.25,
+        status: "pending",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        updatedAt: new Date().toISOString(),
+        items: [],
+      },
+      {
+        id: "507f1f77bcf86cd799439025",
+        orderNumber: "ORD-2024-008",
+        user: { id: "507f1f77bcf86cd799439026", username: "elena.rosa", email: "elena.rosa@example.com" },
+        totalAmount: 123.45,
+        status: "completed",
+        createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
+        updatedAt: new Date().toISOString(),
+        items: [],
+      },
+      {
+        id: "507f1f77bcf86cd799439027",
+        orderNumber: "ORD-2024-009",
+        user: { id: "507f1f77bcf86cd799439028", username: "davide.arancio", email: "davide.arancio@example.com" },
+        totalAmount: 890.75,
+        status: "completed",
+        createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(), // 9 days ago
+        updatedAt: new Date().toISOString(),
+        items: [],
+      },
+      {
+        id: "507f1f77bcf86cd799439029",
+        orderNumber: "ORD-2024-010",
+        user: { id: "507f1f77bcf86cd799439030", username: "chiara.azzurro", email: "chiara.azzurro@example.com" },
+        totalAmount: 345.6,
+        status: "pending",
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
         updatedAt: new Date().toISOString(),
         items: [],
       },
@@ -631,7 +681,7 @@ export class OrderListComponent implements OnInit {
 
     this.allOrders = mockOrders
     this.totalOrders = mockOrders.length
-    this.toastService.show("Loaded 5 mock orders with valid ObjectIds", "success")
+    this.toastService.show(`Loaded ${mockOrders.length} realistic mock orders`, "success")
     this.applyFilters()
   }
 
