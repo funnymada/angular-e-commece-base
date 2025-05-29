@@ -317,7 +317,7 @@ export class ProductFormComponent implements OnInit {
   productForm: FormGroup
   categories: Category[] = []
   isEditMode = false
-  productId: number | null = null
+  productId: string | null = null // Changed from number to string
   loading = false
   submitted = false
   formSubmitting = false
@@ -345,9 +345,18 @@ export class ProductFormComponent implements OnInit {
 
     this.route.params.subscribe((params) => {
       if (params["id"]) {
-        this.isEditMode = true
-        this.productId = +params["id"]
-        this.loadProduct(this.productId)
+        const id = params["id"]
+
+        // Convert to string and validate
+        const stringId = String(id)
+        if (stringId && stringId.trim().length > 0) {
+          this.isEditMode = true
+          this.productId = stringId
+          this.loadProduct(this.productId)
+        } else {
+          this.toastService.show("Invalid product ID", "error")
+          this.router.navigate(["/products"])
+        }
       }
     })
   }
@@ -368,7 +377,8 @@ export class ProductFormComponent implements OnInit {
     })
   }
 
-  loadProduct(id: number): void {
+  loadProduct(id: string): void {
+    // Changed parameter type to string
     this.loading = true
     this.productService.getProduct(id).subscribe({
       next: (product) => {
@@ -445,4 +455,3 @@ export class ProductFormComponent implements OnInit {
     }
   }
 }
-

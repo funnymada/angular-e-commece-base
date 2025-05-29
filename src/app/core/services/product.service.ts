@@ -32,24 +32,24 @@ export class ProductService {
       })
     }
 
-    console.log('API URL:', this.apiUrl)
-    console.log('Request params:', params)
-    console.log('HTTP params:', httpParams.toString())
+    console.log("API URL:", this.apiUrl)
+    console.log("Request params:", params)
+    console.log("HTTP params:", httpParams.toString())
 
-    return this.http.get<{ products: Product[]; total: number }>(this.apiUrl, { params: httpParams })
-      .pipe(
-        tap(response => {
-          console.log('Raw API response:', response)
-          console.log('Products in response:', response?.products)
-          console.log('Total in response:', response?.total)
-          console.log('Type of response:', typeof response)
-          console.log('Is response an array?', Array.isArray(response))
-          console.log('Is products an array?', Array.isArray(response?.products))
-        })
-      )
+    return this.http.get<{ products: Product[]; total: number }>(this.apiUrl, { params: httpParams }).pipe(
+      tap((response) => {
+        console.log("Raw API response:", response)
+        console.log("Products in response:", response?.products)
+        console.log("Total in response:", response?.total)
+        console.log("Type of response:", typeof response)
+        console.log("Is response an array?", Array.isArray(response))
+        console.log("Is products an array?", Array.isArray(response?.products))
+      }),
+    )
   }
 
-  getProduct(id: number): Observable<Product> {
+  getProduct(id: string): Observable<Product> {
+    // Changed from number to string
     return this.http.get<Product>(`${this.apiUrl}/${id}`)
   }
 
@@ -57,11 +57,13 @@ export class ProductService {
     return this.http.post<Product>(this.apiUrl, product)
   }
 
-  updateProduct(id: number, product: ProductUpdate): Observable<Product> {
+  updateProduct(id: string, product: ProductUpdate): Observable<Product> {
+    // Changed from number to string
     return this.http.put<Product>(`${this.apiUrl}/${id}`, product)
   }
 
-  deleteProduct(id: number): Observable<void> {
+  deleteProduct(id: string): Observable<void> {
+    // Changed from number to string
     return this.http.delete<void>(`${this.apiUrl}/${id}`)
   }
 }

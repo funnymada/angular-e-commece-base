@@ -1,4 +1,4 @@
-import { Component, type OnInit } from "@angular/core"
+import { Component, OnInit } from "@angular/core"
 import { CommonModule } from "@angular/common"
 import { RouterModule } from "@angular/router"
 import { FormsModule } from "@angular/forms"
@@ -113,9 +113,21 @@ import { Category } from "../../../core/models/category.model"
                 </span>
               </td>
               <td class="actions-cell">
-                <a [routerLink]="['/products/edit', product.id]" class="action-btn edit-btn">
+                <a 
+                  *ngIf="product.id && isValidId(product.id)" 
+                  [routerLink]="['/products/edit', product.id]" 
+                  class="action-btn edit-btn"
+                >
                   <i class="material-icons">edit</i>
                 </a>
+                <button 
+                  *ngIf="!product.id || !isValidId(product.id)" 
+                  class="action-btn edit-btn disabled" 
+                  disabled
+                  title="Invalid product ID"
+                >
+                  <i class="material-icons">edit</i>
+                </button>
                 <button class="action-btn delete-btn" (click)="confirmDelete(product)">
                   <i class="material-icons">delete</i>
                 </button>
@@ -339,8 +351,14 @@ import { Category } from "../../../core/models/category.model"
       color: white;
     }
     
-    .edit-btn:hover {
+    .edit-btn:hover:not(.disabled) {
       background-color: #138496;
+    }
+    
+    .edit-btn.disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.5;
     }
     
     .delete-btn {
@@ -516,8 +534,8 @@ import { Category } from "../../../core/models/category.model"
   ],
 })
 export class ProductListComponent implements OnInit {
-  products: Product[] = [] // Inizializzato come array vuoto
-  categories: Category[] = [] // Inizializzato come array vuoto
+  products: Product[] = []
+  categories: Category[] = []
   totalProducts = 0
   loading = false
 
@@ -549,15 +567,23 @@ export class ProductListComponent implements OnInit {
     this.loadProducts()
   }
 
+  // Updated method to validate string IDs (MongoDB ObjectId)
+  isValidId(id: any): boolean {
+    if (id === null || id === undefined) return false
+    if (typeof id === "string" && id.trim().length > 0) return true
+    if (typeof id === "number" && !isNaN(id) && id > 0) return true
+    return false
+  }
+
   loadCategories(): void {
     this.categoryService.getCategories().subscribe({
       next: (categories) => {
-        this.categories = categories || [] // Fallback a array vuoto
+        this.categories = categories || []
       },
       error: (error) => {
         console.error("Error loading categories:", error)
         this.toastService.show("Failed to load categories", "error")
-        this.categories = [] // Assicura che sia sempre un array
+        this.categories = []
       },
     })
   }
@@ -565,7 +591,6 @@ export class ProductListComponent implements OnInit {
   loadProducts(): void {
     this.loading = true
 
-    // Pulisci i parametri undefined/null
     const params: any = {}
     if (this.searchTerm && this.searchTerm.trim()) {
       params.search = this.searchTerm.trim()
@@ -586,42 +611,42 @@ export class ProductListComponent implements OnInit {
       params.limit = this.pageSize
     }
 
-    console.log('Loading products with params:', params)
+    console.log("Loading products with params:", params)
 
     this.productService.getProducts(params).subscribe({
       next: (data) => {
-        console.log('Component received data:', data)
-        
-        // Gestisci diverse strutture di risposta possibili
+        console.log("Component received data:", data)
+
         if (Array.isArray(data)) {
-          // Se la risposta è direttamente un array di prodotti
-          console.log('Response is direct array')
+          console.log("Response is direct array")
           this.products = data as Product[]
           this.totalProducts = data.length
-        } else if (data && typeof data === 'object') {
-          // Se la risposta è un oggetto con products e total
-          console.log('Response is object with products/total')
+        } else if (data && typeof data === "object") {
+          console.log("Response is object with products/total")
           this.products = data.products || []
           this.totalProducts = data.total || 0
         } else {
-          // Fallback
-          console.log('Unexpected response format, using fallback')
+          console.log("Unexpected response format, using fallback")
           this.products = []
           this.totalProducts = 0
         }
-        
+
+        // Debug: Log product IDs to check for invalid values
+        this.products.forEach((product, index) => {
+          console.log(`Product ${index}:`, {
+            id: product.id,
+            idType: typeof product.id,
+            isValid: this.isValidId(product.id),
+            name: product.name,
+          })
+        })
+
         this.loading = false
-        console.log('Final products:', this.products)
-        console.log('Final total:', this.totalProducts)
+        console.log("Final products:", this.products)
+        console.log("Final total:", this.totalProducts)
       },
       error: (error) => {
         console.error("Error loading products:", error)
-        console.error("Error details:", {
-          message: error.message,
-          status: error.status,
-          statusText: error.statusText,
-          url: error.url
-        })
         this.toastService.show("Failed to load products", "error")
         this.products = []
         this.totalProducts = 0
@@ -641,6 +666,10 @@ export class ProductListComponent implements OnInit {
   }
 
   confirmDelete(product: Product): void {
+    if (!this.isValidId(product.id)) {
+      this.toastService.show("Cannot delete product with invalid ID", "error")
+      return
+    }
     this.productToDelete = product
     this.showDeleteModal = true
   }
@@ -651,9 +680,10 @@ export class ProductListComponent implements OnInit {
   }
 
   deleteProduct(): void {
-    if (!this.productToDelete) return
+    if (!this.productToDelete || !this.isValidId(this.productToDelete.id)) return
 
-    this.productService.deleteProduct(this.productToDelete.id).subscribe({
+    const productId = String(this.productToDelete.id)
+    this.productService.deleteProduct(productId).subscribe({
       next: () => {
         this.toastService.show(`Product "${this.productToDelete?.name}" deleted successfully`, "success")
         this.loadProducts()
@@ -666,8 +696,7 @@ export class ProductListComponent implements OnInit {
     })
   }
 
-  // TrackBy function per ottimizzare le performance
-  trackByProductId(index: number, product: Product): number {
-    return product.id
+  trackByProductId(index: number, product: Product): string {
+    return String(product.id)
   }
 }
