@@ -24,11 +24,11 @@ import { Category } from "../../../core/models/category.model"
           <input 
             type="text" 
             [(ngModel)]="searchTerm" 
-            (keyup.enter)="loadProducts()"
+            (keyup.enter)="applyFilters()"
             placeholder="Search products..." 
             class="search-input"
           >
-          <button class="search-btn" (click)="loadProducts()">
+          <button class="search-btn" (click)="applyFilters()">
             <i class="material-icons">search</i>
           </button>
         </div>
@@ -38,11 +38,11 @@ import { Category } from "../../../core/models/category.model"
           <select 
             id="category-filter" 
             [(ngModel)]="selectedCategoryId" 
-            (change)="loadProducts()"
+            (change)="applyFilters()"
             class="filter-select"
           >
             <option [ngValue]="null">All Categories</option>
-            <option *ngFor="let category of categories" [value]="category.id">
+            <option *ngFor="let category of categories" [ngValue]="category.id">
               {{ category.name }}
             </option>
           </select>
@@ -53,7 +53,7 @@ import { Category } from "../../../core/models/category.model"
           <select 
             id="sort-by" 
             [(ngModel)]="sortBy" 
-            (change)="loadProducts()"
+            (change)="applyFilters()"
             class="filter-select"
           >
             <option value="name">Name</option>
@@ -68,7 +68,7 @@ import { Category } from "../../../core/models/category.model"
           <select 
             id="sort-order" 
             [(ngModel)]="sortOrder" 
-            (change)="loadProducts()"
+            (change)="applyFilters()"
             class="filter-select"
           >
             <option value="asc">Ascending</option>
@@ -90,7 +90,7 @@ import { Category } from "../../../core/models/category.model"
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let product of products; trackBy: trackByProductId">
+            <tr *ngFor="let product of paginatedProducts; trackBy: trackByProductId">
               <td class="image-cell">
                 <img 
                   [src]="product.imageUrl || '/assets/placeholder-product.jpg'" 
@@ -133,7 +133,7 @@ import { Category } from "../../../core/models/category.model"
                 </button>
               </td>
             </tr>
-            <tr *ngIf="!loading && products.length === 0">
+            <tr *ngIf="!loading && paginatedProducts.length === 0">
               <td colspan="6" class="no-data">No products found</td>
             </tr>
             <tr *ngIf="loading">
@@ -143,16 +143,16 @@ import { Category } from "../../../core/models/category.model"
         </table>
       </div>
       
-      <div class="pagination" *ngIf="!loading && products.length > 0">
+      <div class="pagination" *ngIf="!loading && filteredProducts.length > 0">
         <div class="pagination-info">
           Showing {{ (currentPage - 1) * pageSize + 1 }} to 
-          {{ Math.min(currentPage * pageSize, products.length + (currentPage - 1) * pageSize) }} 
-          <span *ngIf="totalProducts > 0">of {{ totalProducts }}</span> products
+          {{ Math.min(currentPage * pageSize, filteredProducts.length) }} 
+          of {{ filteredProducts.length }} products
         </div>
         <div class="pagination-controls">
           <button 
             class="pagination-btn" 
-            [disabled]="!hasPreviousPage()"
+            [disabled]="currentPage === 1"
             (click)="changePage(currentPage - 1)"
           >
             <i class="material-icons">chevron_left</i>
@@ -160,7 +160,7 @@ import { Category } from "../../../core/models/category.model"
           <span class="pagination-page">{{ currentPage }}</span>
           <button 
             class="pagination-btn" 
-            [disabled]="!hasNextPage() && products.length < pageSize"
+            [disabled]="currentPage * pageSize >= filteredProducts.length"
             (click)="changePage(currentPage + 1)"
           >
             <i class="material-icons">chevron_right</i>
@@ -535,9 +535,10 @@ import { Category } from "../../../core/models/category.model"
   ],
 })
 export class ProductListComponent implements OnInit {
-  products: Product[] = []
+  allProducts: Product[] = []
+  filteredProducts: Product[] = []
+  paginatedProducts: Product[] = []
   categories: Category[] = []
-  totalProducts = 0
   loading = false
 
   // Filters and sorting
@@ -556,10 +557,6 @@ export class ProductListComponent implements OnInit {
 
   // For template use
   Math = Math
-
-  // Proprietà per la paginazione lato client
-  allProducts: Product[] = []
-  paginatedProducts: Product[] = []
 
   constructor(
     private productService: ProductService,
@@ -596,74 +593,119 @@ export class ProductListComponent implements OnInit {
   loadProducts(): void {
     this.loading = true
 
-    const params: any = {}
-    if (this.searchTerm && this.searchTerm.trim()) {
-      params.search = this.searchTerm.trim()
-    }
-    if (this.selectedCategoryId !== null && this.selectedCategoryId !== undefined) {
-      params.categoryId = this.selectedCategoryId
-    }
-    if (this.sortBy) {
-      params.sortBy = this.sortBy
-    }
-    if (this.sortOrder) {
-      params.sortOrder = this.sortOrder
-    }
-    // Non inviare page e limit se facciamo paginazione lato client
-
-    console.log("Loading products with params:", params)
-
-    this.productService.getProducts(params).subscribe({
+    // Carica tutti i prodotti senza filtri
+    this.productService.getProducts().subscribe({
       next: (data) => {
         console.log("Component received data:", data)
 
         if (Array.isArray(data)) {
           this.allProducts = data as Product[]
-          this.totalProducts = this.allProducts.length
-          this.updatePaginatedProducts()
-        } else if (data && typeof data === "object") {
-          // Backend supporta paginazione
-          this.products = data.products || []
-          this.totalProducts = data.total || 0
+        } else if (data && typeof data === "object" && Array.isArray(data.products)) {
+          this.allProducts = data.products
         } else {
           this.allProducts = []
-          this.totalProducts = 0
-          this.updatePaginatedProducts()
         }
 
+        // Applica filtri, ordinamento e paginazione
+        this.applyFilters()
         this.loading = false
       },
       error: (error) => {
         console.error("Error loading products:", error)
         this.toastService.show("Failed to load products", "error")
         this.allProducts = []
-        this.totalProducts = 0
-        this.updatePaginatedProducts()
+        this.filteredProducts = []
+        this.paginatedProducts = []
         this.loading = false
       },
     })
   }
 
+  applyFilters(): void {
+    // Filtra per termine di ricerca
+    let filtered = [...this.allProducts]
+
+    if (this.searchTerm && this.searchTerm.trim()) {
+      const search = this.searchTerm.trim().toLowerCase()
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(search) ||
+          (product.description && product.description.toLowerCase().includes(search)),
+      )
+    }
+
+    // Filtra per categoria
+    if (this.selectedCategoryId !== null && this.selectedCategoryId !== undefined) {
+      filtered = filtered.filter((product) => {
+        // Gestisci sia string che number per categoryId
+        const productCategoryId =
+          typeof product.categoryId === "string" ? Number.parseInt(product.categoryId, 10) : product.categoryId
+
+        const selectedId =
+          typeof this.selectedCategoryId === "string"
+            ? Number.parseInt(this.selectedCategoryId, 10)
+            : this.selectedCategoryId
+
+        return productCategoryId === selectedId
+      })
+    }
+
+    // Ordina i prodotti
+    if (this.sortBy) {
+      filtered.sort((a, b) => {
+        let valueA = a[this.sortBy as keyof Product]
+        let valueB = b[this.sortBy as keyof Product]
+
+        // Gestisci valori null/undefined
+        if (valueA === null || valueA === undefined) valueA = ""
+        if (valueB === null || valueB === undefined) valueB = ""
+
+        // Converti a numeri per confronto numerico se necessario
+        if (this.sortBy === "price" || this.sortBy === "stock") {
+          valueA = Number(valueA)
+          valueB = Number(valueB)
+          return this.sortOrder === "asc" ? valueA - valueB : valueB - valueA
+        }
+
+        // Confronto stringhe
+        if (typeof valueA === "string" && typeof valueB === "string") {
+          return this.sortOrder === "asc" ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA)
+        }
+
+        // Fallback per altri tipi
+        if (valueA < valueB) return this.sortOrder === "asc" ? -1 : 1
+        if (valueA > valueB) return this.sortOrder === "asc" ? 1 : -1
+        return 0
+      })
+    }
+
+    this.filteredProducts = filtered
+    this.currentPage = 1 // Reset alla prima pagina quando si applicano filtri
+    this.updatePaginatedProducts()
+
+    console.log("Filtered products:", this.filteredProducts.length)
+    console.log("Current page:", this.currentPage)
+    console.log("Paginated products:", this.paginatedProducts.length)
+  }
+
   updatePaginatedProducts(): void {
     const startIndex = (this.currentPage - 1) * this.pageSize
     const endIndex = startIndex + this.pageSize
-    this.products = this.allProducts.slice(startIndex, endIndex)
+    this.paginatedProducts = this.filteredProducts.slice(startIndex, endIndex)
   }
 
   getCategoryName(categoryId: number): string {
-    const category = this.categories.find((c) => c.id === categoryId)
+    const category = this.categories.find((c) => {
+      // Gestisci sia string che number per id
+      const catId = typeof c.id === "string" ? Number.parseInt(c.id as string, 10) : c.id
+      return catId === categoryId
+    })
     return category ? category.name : "Unknown"
   }
 
   changePage(page: number): void {
     this.currentPage = page
-    if (this.allProducts.length > 0) {
-      // Paginazione lato client
-      this.updatePaginatedProducts()
-    } else {
-      // Paginazione lato server
-      this.loadProducts()
-    }
+    this.updatePaginatedProducts()
   }
 
   confirmDelete(product: Product): void {
@@ -687,7 +729,7 @@ export class ProductListComponent implements OnInit {
     this.productService.deleteProduct(productId).subscribe({
       next: () => {
         this.toastService.show(`Product "${this.productToDelete?.name}" deleted successfully`, "success")
-        this.loadProducts()
+        this.loadProducts() // Ricarica tutti i prodotti
         this.cancelDelete()
       },
       error: (error) => {
@@ -699,13 +741,5 @@ export class ProductListComponent implements OnInit {
 
   trackByProductId(index: number, product: Product): string {
     return String(product.id)
-  }
-
-  hasNextPage(): boolean {
-    return this.currentPage * this.pageSize < this.totalProducts
-  }
-
-  hasPreviousPage(): boolean {
-    return this.currentPage > 1
   }
 }
