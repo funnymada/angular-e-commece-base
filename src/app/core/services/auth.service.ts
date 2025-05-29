@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, tap } from "rxjs"
 import { environment } from "../../enviroments/enviroment"
 import { User } from "../models/user.model"
 import { HttpHeaders } from '@angular/common/http';
+import { take } from 'rxjs/operators'
 @Injectable({
   providedIn: "root",
 })
@@ -25,7 +26,12 @@ tokenChecked$ = this.tokenCheckedSubject.asObservable()
     this.checkToken()
   }
   
-
+init(): Promise<void> {
+  return new Promise((resolve) => {
+    this.tokenChecked$.pipe(take(1)).subscribe(() => resolve())
+    this.checkToken()
+  })
+}
 login(credentials: { username: string; password: string }): Observable<{ token: string; user: User }> {
   // Crea l'header Basic Auth
   const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
