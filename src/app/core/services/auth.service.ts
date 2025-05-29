@@ -18,9 +18,13 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(this.getStoredUser())
   currentUser$ = this.currentUserSubject.asObservable()
 
+private tokenCheckedSubject = new BehaviorSubject<boolean>(false)
+tokenChecked$ = this.tokenCheckedSubject.asObservable()
+
   constructor(private http: HttpClient) {
     this.checkToken()
   }
+  
 
 login(credentials: { username: string; password: string }): Observable<{ token: string; user: User }> {
   // Crea l'header Basic Auth
@@ -39,6 +43,8 @@ login(credentials: { username: string; password: string }): Observable<{ token: 
     }),
   )
 }
+
+
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY)
@@ -68,19 +74,25 @@ login(credentials: { username: string; password: string }): Observable<{ token: 
     return !!this.getToken()
   }
 
-  private checkToken(): void {
-    if (this.hasToken()) {
-      this.getCurrentUser().subscribe({
-        next: (user) => {
-          this.currentUserSubject.next(user)
-          this.authSubject.next(true)
-        },
-        error: () => {
-          this.logout()
-        },
-      })
-    }
+private checkToken(): void {
+  if (this.hasToken()) {
+    this.getCurrentUser().subscribe({
+      next: (user) => {
+        this.currentUserSubject.next(user)
+        this.authSubject.next(true)
+        this.tokenCheckedSubject.next(true)
+      },
+      error: () => {
+        this.logout()
+        this.tokenCheckedSubject.next(true)
+      },
+    })
+  } else {
+    this.tokenCheckedSubject.next(true)
   }
+}
+
+
 
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/me`)

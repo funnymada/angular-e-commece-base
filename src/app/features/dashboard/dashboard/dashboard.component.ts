@@ -100,7 +100,7 @@ import { ChartConfiguration, ChartData } from "chart.js"
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody *ngIf="recentOrders">
               <tr *ngFor="let order of recentOrders">
                 <td>{{ order.orderNumber }}</td>
                 <td>{{ order.user?.username || 'Unknown' }}</td>
@@ -124,6 +124,7 @@ import { ChartConfiguration, ChartData } from "chart.js"
   styles: [
     `
     .dashboard {
+      height: 90vh;
       padding: 20px;
     }
     

@@ -15,7 +15,7 @@ import { ToastService } from "../../../core/services/toast.service"
         <h2 class="login-title">E-Commerce Admin</h2>
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
           <div class="form-group">
-            <label for="username">Username</label>
+            <label for="username">Mail</label>
             <input 
               type="text" 
               id="username" 
@@ -24,7 +24,7 @@ import { ToastService } from "../../../core/services/toast.service"
               [ngClass]="{'is-invalid': submitted && f['username'].errors}"
             >
             <div *ngIf="submitted && f['username'].errors" class="invalid-feedback">
-              <div *ngIf="f['username'].errors['required']">Username is required</div>
+              <div *ngIf="f['username'].errors['required']">Mail is required</div>
             </div>
           </div>
           
@@ -47,9 +47,8 @@ import { ToastService } from "../../../core/services/toast.service"
               type="submit" 
               class="login-button" 
               [disabled]="loading"
-            >
+            >Login
               <span *ngIf="loading" class="spinner"></span>
-              <span *ngIf="!loading">Login</span>
             </button>
           </div>
         </form>
@@ -62,8 +61,9 @@ import { ToastService } from "../../../core/services/toast.service"
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      min-height: 90vh;
       background-color: #f8f9fa;
+
     }
     
     .login-card {

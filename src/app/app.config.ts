@@ -11,6 +11,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools'
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimations(),
