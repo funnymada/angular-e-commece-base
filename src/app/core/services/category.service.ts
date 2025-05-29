@@ -16,7 +16,8 @@ export class CategoryService {
     return this.http.get<Category[]>(this.apiUrl)
   }
 
-  getCategory(id: number): Observable<Category> {
+  getCategory(id: string): Observable<Category> {
+    // Changed from number to string
     return this.http.get<Category>(`${this.apiUrl}/${id}`)
   }
 
@@ -24,12 +25,13 @@ export class CategoryService {
     return this.http.post<Category>(this.apiUrl, category)
   }
 
-  updateCategory(id: number, category: CategoryUpdate): Observable<Category> {
+  updateCategory(id: string, category: CategoryUpdate): Observable<Category> {
+    // Changed from number to string
     return this.http.put<Category>(`${this.apiUrl}/${id}`, category)
   }
 
-  deleteCategory(id: number): Observable<void> {
+  deleteCategory(id: string): Observable<void> {
+    // Changed from number to string
     return this.http.delete<void>(`${this.apiUrl}/${id}`)
   }
 }
-

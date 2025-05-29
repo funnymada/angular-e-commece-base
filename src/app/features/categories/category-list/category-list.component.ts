@@ -27,14 +27,26 @@ import { Category } from "../../../core/models/category.model"
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let category of categories">
+            <tr *ngFor="let category of categories; trackBy: trackByCategoryId">
               <td>{{ category.name }}</td>
               <td>{{ category.description }}</td>
               <td>{{ category.createdAt | date:'medium' }}</td>
               <td class="actions-cell">
-                <a [routerLink]="['/categories/edit', category.id]" class="action-btn edit-btn">
+                <a 
+                  *ngIf="category.id && isValidId(category.id)" 
+                  [routerLink]="['/categories/edit', category.id]" 
+                  class="action-btn edit-btn"
+                >
                   <i class="material-icons">edit</i>
                 </a>
+                <button 
+                  *ngIf="!category.id || !isValidId(category.id)" 
+                  class="action-btn edit-btn disabled" 
+                  disabled
+                  title="Invalid category ID"
+                >
+                  <i class="material-icons">edit</i>
+                </button>
                 <button class="action-btn delete-btn" (click)="confirmDelete(category)">
                   <i class="material-icons">delete</i>
                 </button>
@@ -154,8 +166,14 @@ import { Category } from "../../../core/models/category.model"
       color: white;
     }
     
-    .edit-btn:hover {
+    .edit-btn:hover:not(.disabled) {
       background-color: #138496;
+    }
+    
+    .edit-btn.disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.5;
     }
     
     .delete-btn {
@@ -279,11 +297,30 @@ export class CategoryListComponent implements OnInit {
     this.loadCategories()
   }
 
+  // Added method to validate category ID
+  isValidId(id: any): boolean {
+    if (id === null || id === undefined) return false
+    if (typeof id === "string" && id.trim().length > 0) return true
+    if (typeof id === "number" && !isNaN(id) && id > 0) return true
+    return false
+  }
+
   loadCategories(): void {
     this.loading = true
     this.categoryService.getCategories().subscribe({
       next: (categories) => {
         this.categories = categories
+
+        // Debug: Log category IDs to check for invalid values
+        this.categories.forEach((category, index) => {
+          console.log(`Category ${index}:`, {
+            id: category.id,
+            idType: typeof category.id,
+            isValid: this.isValidId(category.id),
+            name: category.name,
+          })
+        })
+
         this.loading = false
       },
       error: (error) => {
@@ -295,6 +332,10 @@ export class CategoryListComponent implements OnInit {
   }
 
   confirmDelete(category: Category): void {
+    if (!this.isValidId(category.id)) {
+      this.toastService.show("Cannot delete category with invalid ID", "error")
+      return
+    }
     this.categoryToDelete = category
     this.showDeleteModal = true
   }
@@ -305,9 +346,10 @@ export class CategoryListComponent implements OnInit {
   }
 
   deleteCategory(): void {
-    if (!this.categoryToDelete) return
+    if (!this.categoryToDelete || !this.isValidId(this.categoryToDelete.id)) return
 
-    this.categoryService.deleteCategory(this.categoryToDelete.id).subscribe({
+    const categoryId = String(this.categoryToDelete.id)
+    this.categoryService.deleteCategory(categoryId).subscribe({
       next: () => {
         this.toastService.show(`Category "${this.categoryToDelete?.name}" deleted successfully`, "success")
         this.loadCategories()
@@ -319,5 +361,8 @@ export class CategoryListComponent implements OnInit {
       },
     })
   }
-}
 
+  trackByCategoryId(index: number, category: Category): string {
+    return String(category.id)
+  }
+}

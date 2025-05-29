@@ -197,7 +197,7 @@ import { CategoryCreate, CategoryUpdate } from "../../../core/models/category.mo
 export class CategoryFormComponent implements OnInit {
   categoryForm: FormGroup
   isEditMode = false
-  categoryId: number | null = null
+  categoryId: string | null = null // Changed from number to string
   loading = false
   submitted = false
   formSubmitting = false
@@ -218,9 +218,18 @@ export class CategoryFormComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       if (params["id"]) {
-        this.isEditMode = true
-        this.categoryId = +params["id"]
-        this.loadCategory(this.categoryId)
+        const id = params["id"]
+
+        // Convert to string and validate
+        const stringId = String(id)
+        if (stringId && stringId.trim().length > 0) {
+          this.isEditMode = true
+          this.categoryId = stringId
+          this.loadCategory(this.categoryId)
+        } else {
+          this.toastService.show("Invalid category ID", "error")
+          this.router.navigate(["/categories"])
+        }
       }
     })
   }
@@ -229,7 +238,8 @@ export class CategoryFormComponent implements OnInit {
     return this.categoryForm.controls
   }
 
-  loadCategory(id: number): void {
+  loadCategory(id: string): void {
+    // Changed parameter type to string
     this.loading = true
     this.categoryService.getCategory(id).subscribe({
       next: (category) => {
@@ -294,4 +304,3 @@ export class CategoryFormComponent implements OnInit {
     }
   }
 }
-

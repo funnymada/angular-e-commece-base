@@ -1,5 +1,5 @@
 export interface Category {
-  id: number
+  id: string | number 
   name: string
   description: string
   createdAt: string
@@ -15,4 +15,3 @@ export interface CategoryUpdate {
   name?: string
   description?: string
 }
-
