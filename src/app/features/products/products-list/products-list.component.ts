@@ -143,15 +143,16 @@ import { Category } from "../../../core/models/category.model"
         </table>
       </div>
       
-      <div class="pagination" *ngIf="!loading && totalProducts > 0">
+      <div class="pagination" *ngIf="!loading && products.length > 0">
         <div class="pagination-info">
           Showing {{ (currentPage - 1) * pageSize + 1 }} to 
-          {{ Math.min(currentPage * pageSize, totalProducts) }} of {{ totalProducts }} products
+          {{ Math.min(currentPage * pageSize, products.length + (currentPage - 1) * pageSize) }} 
+          <span *ngIf="totalProducts > 0">of {{ totalProducts }}</span> products
         </div>
         <div class="pagination-controls">
           <button 
             class="pagination-btn" 
-            [disabled]="currentPage === 1"
+            [disabled]="!hasPreviousPage()"
             (click)="changePage(currentPage - 1)"
           >
             <i class="material-icons">chevron_left</i>
@@ -159,7 +160,7 @@ import { Category } from "../../../core/models/category.model"
           <span class="pagination-page">{{ currentPage }}</span>
           <button 
             class="pagination-btn" 
-            [disabled]="currentPage * pageSize >= totalProducts"
+            [disabled]="!hasNextPage() && products.length < pageSize"
             (click)="changePage(currentPage + 1)"
           >
             <i class="material-icons">chevron_right</i>
@@ -556,6 +557,10 @@ export class ProductListComponent implements OnInit {
   // For template use
   Math = Math
 
+  // Proprietà per la paginazione lato client
+  allProducts: Product[] = []
+  paginatedProducts: Product[] = []
+
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
@@ -604,12 +609,7 @@ export class ProductListComponent implements OnInit {
     if (this.sortOrder) {
       params.sortOrder = this.sortOrder
     }
-    if (this.currentPage) {
-      params.page = this.currentPage
-    }
-    if (this.pageSize) {
-      params.limit = this.pageSize
-    }
+    // Non inviare page e limit se facciamo paginazione lato client
 
     console.log("Loading products with params:", params)
 
@@ -618,41 +618,36 @@ export class ProductListComponent implements OnInit {
         console.log("Component received data:", data)
 
         if (Array.isArray(data)) {
-          console.log("Response is direct array")
-          this.products = data as Product[]
-          this.totalProducts = data.length
+          this.allProducts = data as Product[]
+          this.totalProducts = this.allProducts.length
+          this.updatePaginatedProducts()
         } else if (data && typeof data === "object") {
-          console.log("Response is object with products/total")
+          // Backend supporta paginazione
           this.products = data.products || []
           this.totalProducts = data.total || 0
         } else {
-          console.log("Unexpected response format, using fallback")
-          this.products = []
+          this.allProducts = []
           this.totalProducts = 0
+          this.updatePaginatedProducts()
         }
 
-        // Debug: Log product IDs to check for invalid values
-        this.products.forEach((product, index) => {
-          console.log(`Product ${index}:`, {
-            id: product.id,
-            idType: typeof product.id,
-            isValid: this.isValidId(product.id),
-            name: product.name,
-          })
-        })
-
         this.loading = false
-        console.log("Final products:", this.products)
-        console.log("Final total:", this.totalProducts)
       },
       error: (error) => {
         console.error("Error loading products:", error)
         this.toastService.show("Failed to load products", "error")
-        this.products = []
+        this.allProducts = []
         this.totalProducts = 0
+        this.updatePaginatedProducts()
         this.loading = false
       },
     })
+  }
+
+  updatePaginatedProducts(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize
+    const endIndex = startIndex + this.pageSize
+    this.products = this.allProducts.slice(startIndex, endIndex)
   }
 
   getCategoryName(categoryId: number): string {
@@ -662,7 +657,13 @@ export class ProductListComponent implements OnInit {
 
   changePage(page: number): void {
     this.currentPage = page
-    this.loadProducts()
+    if (this.allProducts.length > 0) {
+      // Paginazione lato client
+      this.updatePaginatedProducts()
+    } else {
+      // Paginazione lato server
+      this.loadProducts()
+    }
   }
 
   confirmDelete(product: Product): void {
@@ -698,5 +699,13 @@ export class ProductListComponent implements OnInit {
 
   trackByProductId(index: number, product: Product): string {
     return String(product.id)
+  }
+
+  hasNextPage(): boolean {
+    return this.currentPage * this.pageSize < this.totalProducts
+  }
+
+  hasPreviousPage(): boolean {
+    return this.currentPage > 1
   }
 }
