@@ -41,7 +41,7 @@ import { Category } from "../../../core/models/category.model"
             (change)="loadProducts()"
             class="filter-select"
           >
-            <option [value]="null">All Categories</option>
+            <option [ngValue]="null">All Categories</option>
             <option *ngFor="let category of categories" [value]="category.id">
               {{ category.name }}
             </option>
@@ -90,7 +90,7 @@ import { Category } from "../../../core/models/category.model"
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let product of products">
+            <tr *ngFor="let product of products; trackBy: trackByProductId">
               <td class="image-cell">
                 <img 
                   [src]="product.imageUrl || '/assets/placeholder-product.jpg'" 
@@ -121,7 +121,7 @@ import { Category } from "../../../core/models/category.model"
                 </button>
               </td>
             </tr>
-            <tr *ngIf="products.length === 0 && !loading">
+            <tr *ngIf="!loading && products.length === 0">
               <td colspan="6" class="no-data">No products found</td>
             </tr>
             <tr *ngIf="loading">
@@ -131,7 +131,7 @@ import { Category } from "../../../core/models/category.model"
         </table>
       </div>
       
-      <div class="pagination" *ngIf="totalProducts > 0">
+      <div class="pagination" *ngIf="!loading && totalProducts > 0">
         <div class="pagination-info">
           Showing {{ (currentPage - 1) * pageSize + 1 }} to 
           {{ Math.min(currentPage * pageSize, totalProducts) }} of {{ totalProducts }} products
@@ -516,8 +516,8 @@ import { Category } from "../../../core/models/category.model"
   ],
 })
 export class ProductListComponent implements OnInit {
-  products: Product[] = []
-  categories: Category[] = []
+  products: Product[] = [] // Inizializzato come array vuoto
+  categories: Category[] = [] // Inizializzato come array vuoto
   totalProducts = 0
   loading = false
 
@@ -552,11 +552,12 @@ export class ProductListComponent implements OnInit {
   loadCategories(): void {
     this.categoryService.getCategories().subscribe({
       next: (categories) => {
-        this.categories = categories
+        this.categories = categories || [] // Fallback a array vuoto
       },
       error: (error) => {
         console.error("Error loading categories:", error)
         this.toastService.show("Failed to load categories", "error")
+        this.categories = [] // Assicura che sia sempre un array
       },
     })
   }
@@ -564,24 +565,66 @@ export class ProductListComponent implements OnInit {
   loadProducts(): void {
     this.loading = true
 
-    const params = {
-      search: this.searchTerm || undefined,
-      categoryId: this.selectedCategoryId || undefined,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder,
-      page: this.currentPage,
-      limit: this.pageSize,
+    // Pulisci i parametri undefined/null
+    const params: any = {}
+    if (this.searchTerm && this.searchTerm.trim()) {
+      params.search = this.searchTerm.trim()
     }
+    if (this.selectedCategoryId !== null && this.selectedCategoryId !== undefined) {
+      params.categoryId = this.selectedCategoryId
+    }
+    if (this.sortBy) {
+      params.sortBy = this.sortBy
+    }
+    if (this.sortOrder) {
+      params.sortOrder = this.sortOrder
+    }
+    if (this.currentPage) {
+      params.page = this.currentPage
+    }
+    if (this.pageSize) {
+      params.limit = this.pageSize
+    }
+
+    console.log('Loading products with params:', params)
 
     this.productService.getProducts(params).subscribe({
       next: (data) => {
-        this.products = data.products
-        this.totalProducts = data.total
+        console.log('Component received data:', data)
+        
+        // Gestisci diverse strutture di risposta possibili
+        if (Array.isArray(data)) {
+          // Se la risposta è direttamente un array di prodotti
+          console.log('Response is direct array')
+          this.products = data as Product[]
+          this.totalProducts = data.length
+        } else if (data && typeof data === 'object') {
+          // Se la risposta è un oggetto con products e total
+          console.log('Response is object with products/total')
+          this.products = data.products || []
+          this.totalProducts = data.total || 0
+        } else {
+          // Fallback
+          console.log('Unexpected response format, using fallback')
+          this.products = []
+          this.totalProducts = 0
+        }
+        
         this.loading = false
+        console.log('Final products:', this.products)
+        console.log('Final total:', this.totalProducts)
       },
       error: (error) => {
         console.error("Error loading products:", error)
+        console.error("Error details:", {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        })
         this.toastService.show("Failed to load products", "error")
+        this.products = []
+        this.totalProducts = 0
         this.loading = false
       },
     })
@@ -622,5 +665,9 @@ export class ProductListComponent implements OnInit {
       },
     })
   }
-}
 
+  // TrackBy function per ottimizzare le performance
+  trackByProductId(index: number, product: Product): number {
+    return product.id
+  }
+}
