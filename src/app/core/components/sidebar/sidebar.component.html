@@ -1,0 +1,91 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <div class="sidebar-header">
+    <button class="toggle-button" (click)="toggleSidebar()">
+      <i class="material-icons">{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</i>
+    </button>
+  </div>
+  <nav class="nav">
+    <ul class="nav-list">
+      <li *ngFor="let item of navItems" class="nav-item">
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          class="nav-link"
+        >
+          <i class="material-icons">{{ item.icon }}</i>
+          <span class="label" *ngIf="!isCollapsed">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>
+<style>
+    .sidebar {
+  width: 250px;
+  background-color: #f8f9fa;
+  height: 100vh;
+  border-right: 1px solid #e9ecef;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.toggle-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #495057;
+  font-size: 24px;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  margin: 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #495057;
+  text-decoration: none;
+  transition: background 0.2s;
+  gap: 10px;
+}
+
+.nav-link:hover {
+  background-color: #e9ecef;
+}
+
+.nav-link.active {
+  background-color: #e9ecef;
+  color: #007bff;
+  border-left: 3px solid #007bff;
+}
+
+.material-icons {
+  font-size: 20px;
+}
+
+.label {
+  white-space: nowrap;
+  overflow: hidden;
+}
+</style>
