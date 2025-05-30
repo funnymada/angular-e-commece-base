@@ -83,6 +83,8 @@ export class AppComponent {
   loaded = false
 
   constructor(private authService: AuthService) {
+    this.authService.checkToken()
+  
     this.authService.isAuthenticated$.subscribe((isAuth) => {
       this.isAuthenticated = isAuth
       this.loaded = true

@@ -22,7 +22,8 @@ private tokenCheckedSubject = new BehaviorSubject<boolean>(false)
 tokenChecked$ = this.tokenCheckedSubject.asObservable()
 
   constructor(private http: HttpClient) {
-    this.checkToken()
+    console.log("called checktoken")
+   
   }
   
 
@@ -74,15 +75,16 @@ login(credentials: { username: string; password: string }): Observable<{ token: 
     return !!this.getToken()
   }
 
-private checkToken(): void {
+public checkToken(): void {
   if (this.hasToken()) {
+    console.log(this.getToken())
     this.getCurrentUser().subscribe({
       next: (user) => {
         this.currentUserSubject.next(user)
         this.authSubject.next(true)
         this.tokenCheckedSubject.next(true)
       },
-      error: () => {
+      error: (error) => {
         this.logout()
         this.tokenCheckedSubject.next(true)
       },
@@ -96,6 +98,7 @@ private checkToken(): void {
 
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/me`)
+    
   }
 }
 
