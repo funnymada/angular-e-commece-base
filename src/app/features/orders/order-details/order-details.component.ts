@@ -85,7 +85,7 @@ import { Order, OrderStatus, OrderUpdate } from "../../../core/models/order.mode
                   </tr>
                 </thead>
                 <tbody>
-                  <ng-container *ngIf="order.items.length > 0; else noItems">
+                  <ng-container *ngIf="(order.items || []).length > 0; else noItems">
                     <tr *ngFor="let item of order.items">
                       <td>
                         <div class="product-info">
@@ -136,7 +136,7 @@ import { Order, OrderStatus, OrderUpdate } from "../../../core/models/order.mode
                 [disabled]="newStatus === order.status || updating"
               >
                 <span *ngIf="updating" class="spinner"></span>
-                <span *ngIf="!updating">Update Status (Debug: {{ updating ? 'true' : 'false' }})</span>
+                <span *ngIf="!updating">Update Status</span>
               </button>
             </div>
           </div>
@@ -277,6 +277,16 @@ import { Order, OrderStatus, OrderUpdate } from "../../../core/models/order.mode
     }
     
     .status-canceled {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .status-completed {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .status-cancelled {
       background-color: #f8d7da;
       color: #721c24;
     }
@@ -445,7 +455,7 @@ export class OrderDetailsComponent implements OnInit {
   loading = false
   updating = false
   error: string | null = null
-  newStatus: OrderStatus = "pending"
+  newStatus: OrderStatus | null = null
   orderStatuses: OrderStatus[] = ["pending", "completed", "cancelled"]
 
   constructor(
@@ -506,7 +516,7 @@ export class OrderDetailsComponent implements OnInit {
   }
 
   updateStatus(): void {
-    if (!this.order || this.newStatus === this.order.status) {
+    if (!this.order || this.newStatus === this.order.status || this.newStatus === null) {
       console.log("OrderDetailsComponent: Update skipped. Order:", this.order, "New Status:", this.newStatus)
       return
     }
@@ -528,16 +538,16 @@ export class OrderDetailsComponent implements OnInit {
       billingAddress: this.order.billingAddress,
       paymentMethod: this.order.paymentMethod,
       notes: this.order.notes,
-      // Add any other fields from OrderUpdate that might be required by the backend
-      // For example, if totalAmount is part of OrderUpdate and required:
-      // totalAmount: this.order.totalAmount
     }
 
     console.log("OrderDetailsComponent: Sending update payload:", orderUpdatePayload) // Debug the payload
 
     this.orderService.updateOrder(String(this.order.id), orderUpdatePayload).subscribe({
       next: (updatedOrder: Order) => {
-        this.order = updatedOrder
+        this.order = {
+          ...updatedOrder,
+          items: updatedOrder.items || [], // Ensure items is always an array
+        }
         this.toastService.show("Order status updated successfully", "success")
         this.updating = false
         console.log("OrderDetailsComponent: Status updated successfully. New order:", this.order)

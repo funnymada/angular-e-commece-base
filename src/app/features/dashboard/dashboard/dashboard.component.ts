@@ -438,19 +438,35 @@ export class DashboardComponent implements OnInit {
 
   loadAnalytics(): Promise<void> {
     return new Promise((resolve) => {
-      this.orderService.getAnalytics().subscribe({
-        next: (data) => {
-          this.analytics = data
-          this.updateCharts()
-          console.log("Analytics data loaded successfully:", this.analytics)
-          resolve()
-        },
-        error: (error) => {
-          console.error("Error loading analytics data:", error)
-          this.toastService.show("Analytics data loaded from fallback calculation", "info")
-          resolve() // Don't reject, as fallback should have been used
-        },
-      })
+      console.log("Generando dati mock per analytics invece di chiamare l'API...")
+
+      // Usa direttamente i dati mock invece di chiamare l'API
+      this.analytics = {
+        totalSales: 45678.9,
+        totalOrders: 156,
+        averageOrderValue: 292.81,
+        salesByDay: [
+          { date: "2024-01-22", sales: 1245.5 },
+          { date: "2024-01-23", sales: 1567.8 },
+          { date: "2024-01-24", sales: 987.25 },
+          { date: "2024-01-25", sales: 1789.6 },
+          { date: "2024-01-26", sales: 1456.3 },
+          { date: "2024-01-27", sales: 892.75 },
+          { date: "2024-01-28", sales: 1123.45 },
+        ],
+        salesByCategory: [
+          { category: "Electronics", sales: 15420.5 },
+          { category: "Books", sales: 8750.25 },
+          { category: "Clothing", sales: 12340.8 },
+          { category: "Home & Garden", sales: 6890.45 },
+          { category: "Sports", sales: 2276.9 },
+        ],
+      }
+
+      this.updateCharts()
+      console.log("Dati mock per analytics generati con successo:", this.analytics)
+      this.toastService.show("Dati analytics caricati (mock)", "info")
+      resolve()
     })
   }
 

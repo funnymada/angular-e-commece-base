@@ -1,10 +1,10 @@
 import { Injectable } from "@angular/core"
 import { HttpClient } from "@angular/common/http"
 import { Observable } from "rxjs"
-import { tap, catchError } from "rxjs/operators"
+import { tap } from "rxjs/operators"
 import { of } from "rxjs"
 import { environment } from "../../enviroments/enviroment"
-import  { Order, OrderCreate, OrderUpdate, OrderStatus } from "../models/order.model"
+import { Order, OrderCreate, OrderUpdate, OrderStatus } from "../models/order.model"
 
 export interface AnalyticsData {
   totalSales: number
@@ -58,11 +58,10 @@ export class OrderService {
         console.log("Is array?", Array.isArray(response))
         console.log("Response keys:", Object.keys(response || {}))
         console.log("Orders count:", Array.isArray(response) ? response.length : response?.orders?.length)
-        if (!Array.isArray(response)) {
-          console.log("Total from response:", response.total)
-        } else {
-          console.log("Total from response: N/A (response is array)")
-        }
+        console.log(
+          "Total from response:",
+          !Array.isArray(response) && response?.total !== undefined ? response.total : undefined
+        )
         console.log("============================")
       }),
     )
@@ -99,27 +98,28 @@ export class OrderService {
   }
 
   getAnalytics(): Observable<AnalyticsData> {
-    const analyticsUrl = `${this.apiUrl}/analytics`
-    console.log("=== ANALYTICS REQUEST DEBUG ===")
-    console.log("Analytics URL:", analyticsUrl)
-    console.log("Base API URL:", environment.apiUrl)
-    console.log("Orders API URL:", this.apiUrl)
+    console.log("=== ANALYTICS SERVICE DEBUG ===")
+    console.log("Saltando chiamata API e generando direttamente dati mock...")
     console.log("================================")
 
-    return this.http.get<AnalyticsData>(analyticsUrl).pipe(
-      tap((response) => {
-        console.log("Analytics response received:", response)
-      }),
-      catchError((error) => {
-        console.error("Analytics endpoint failed:", error)
-        console.log("Status:", error.status)
-        console.log("Error message:", error.message)
-        console.log("Falling back to calculated analytics...")
+    // Genera direttamente dati mock senza tentare la chiamata API
+    return of(this.generateMockAnalyticsData())
+  }
 
-        // Fallback: calculate analytics from existing orders
-        return this.calculateAnalyticsFromOrders()
-      }),
-    )
+  private generateMockAnalyticsData(): AnalyticsData {
+    console.log("Generando dati mock per analytics...")
+
+    // Genera dati mock realistici
+    const mockAnalytics: AnalyticsData = {
+      totalSales: 45678.9,
+      totalOrders: 156,
+      averageOrderValue: 292.81,
+      salesByDay: this.generateMockSalesByDay(),
+      salesByCategory: this.generateMockSalesByCategory(),
+    }
+
+    console.log("Dati mock generati:", mockAnalytics)
+    return mockAnalytics
   }
 
   private calculateAnalyticsFromOrders(): Observable<AnalyticsData> {
